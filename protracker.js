@@ -10485,3 +10485,24 @@ setTimeout(() => {
   }
 })();
 
+// ===== Render/Cloud hosting listen fix =====
+const PORT = Number(process.env.PORT || 3000);
+const HOST = "0.0.0.0";
+
+// If you have `server` (http.createServer(app)), use server.listen.
+// Otherwise use app.listen. Do ONE, not both.
+
+if (typeof server !== "undefined" && server && typeof server.listen === "function") {
+  server.listen(PORT, HOST, () => {
+    console.log(`ProTracker running at http://${HOST}:${PORT}`);
+  });
+} else {
+  app.listen(PORT, HOST, () => {
+    console.log(`ProTracker running at http://${HOST}:${PORT}`);
+  });
+}
+
+// Health endpoint for Render health checks
+app.get("/health", (req, res) => res.status(200).send("ok"));
+
+
