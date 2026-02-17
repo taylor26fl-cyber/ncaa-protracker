@@ -1,0 +1,449 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>ProTracker</title>
+  <link rel="stylesheet" href="/styles.css"/>
+</head>
+<body>
+  <div class="bg"></div>
+
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo">PT</div>
+      <div>
+        <div class="title">ProTracker</div>
+        <div class="subtitle">NBA + NCAAB • projections • props • tracking</div>
+      </div>
+    </div>
+
+    <div class="top-actions">
+      <button class="btn ghost" id="themeBtn" title="Toggle theme">🌙</button>
+      <button class="btn" id="syncTodayBtn">Sync Today</button>
+      <button class="btn" id="sync3moBtn">Sync Next 3 Months</button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <aside class="sidebar">
+      <nav class="nav">
+        <button class="navbtn active" data-tab="dashboard">Dashboard</button>
+        <button class="navbtn" data-tab="today">Today</button>
+        <button class="navbtn" data-tab="games">Games</button>
+        <button class="navbtn" data-tab="players">Players</button>
+        <button class="navbtn" data-tab="props">Props</button>
+        <button class="navbtn" data-tab="sync">Sync</button>
+      </nav>
+
+      <div class="card mini">
+        <div class="card-h">Filters</div>
+        <div class="stack">
+          <label class="field">
+            <span>League</span>
+            <select id="leagueFilter">
+              <option value="ALL">All</option>
+              <option value="NBA">NBA</option>
+              <option value="NCAAB">NCAAB</option>
+            </select>
+          </label>
+
+          <label class="field">
+            <span>Search</span>
+            <input id="searchBox" placeholder="team, matchup, eventId..."/>
+          </label>
+
+          <label class="field">
+            <span>Date</span>
+            <input id="dateFilter" placeholder="YYYY-MM-DD (optional)"/>
+          </label>
+
+          <button class="btn ghost" id="clearFilters">Clear</button>
+        </div>
+      </div>
+
+      <div class="card mini">
+        <div class="card-h">Now Playing</div>
+        <div class="muted" id="nowPlaying">Pick a game → Players</div>
+      </div>
+    </aside>
+
+    <section class="content">
+
+      <!-- Dashboard -->
+      <section class="panel show" id="tab-dashboard">
+        <div class="grid2">
+          <div class="card">
+            <div class="card-h">Today</div>
+            <div class="big" id="todayCount">—</div>
+            <div class="muted" id="todaySub">loading…</div>
+          </div>
+          <div class="card">
+            <div class="card-h">Next 3 Months</div>
+            <div class="big" id="rangeCount">—</div>
+            <div class="muted" id="rangeSub">loading…</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-h">Quick Links</div>
+          <div class="muted">Tap a game to open Players.</div>
+          <div class="list" id="quickList">Loading…</div>
+        </div>
+      </section>
+
+      <!-- Today -->
+      <section class="panel" id="tab-today">
+        <div class="panel-head">
+          <div>
+            <div class="panel-title">Today’s Games</div>
+            <div class="muted">Only games scheduled today (UTC). Shows date + time.</div>
+          </div>
+          <div class="row">
+            <button class="btn ghost" id="refreshToday">Refresh</button>
+          </div>
+        </div>
+
+        <div class="tablewrap">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Date/Time</th>
+                <th>League</th>
+                <th>Matchup</th>
+                <th>EventId</th>
+                <th>Projections</th>
+                <th>Latest Line</th>
+                <th>Edges</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="todayBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Games -->
+      <section class="panel" id="tab-games">
+        <div class="panel-head">
+          <div>
+            <div class="panel-title">All Games</div>
+            <div class="muted">Sorted by start time. Shows date + time.</div>
+          </div>
+          <div class="row">
+            <button class="btn ghost" id="refreshGames">Refresh</button>
+          </div>
+        </div>
+
+        <div class="tablewrap">
+          <table class="table" id="gamesTable">
+            <thead>
+              <tr>
+                <th>Date/Time</th>
+                <th>League</th>
+                <th>Matchup</th>
+                <th>EventId</th>
+                <th>Projections</th>
+                <th>Latest Line</th>
+                <th>Edges</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="gamesBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Players -->
+      <section class="panel" id="tab-players">
+        <div class="panel-head">
+          <div>
+            <div class="panel-title">Players</div>
+            <div class="muted">Loads roster/boxscore by eventId.</div>
+          </div>
+          <div class="row">
+            <select id="gamePicker"></select>
+            <button class="btn" id="loadPlayersBtn">Load</button>
+          </div>
+        </div>
+
+        <div class="grid2">
+          <div class="card">
+            <div class="card-h">Roster</div>
+            <div class="list" id="rosterList">Pick a game</div>
+          </div>
+
+          <div class="card">
+            <div class="card-h">Boxscore Lines</div>
+            <div class="muted">If ESPN provides stats, they show here.</div>
+            <div class="list" id="boxList">—</div>
+          </div>
+        </div>
+      
+        <div class="grid2" style="margin-top:12px">
+          <div class="card">
+            <div class="card-h">Player Search</div>
+            <div class="muted">Search any NBA player we’ve seen. Tap to load game log + rolling stats.</div>
+            <div class="row" style="margin-top:10px">
+              <input id="playerSearchBox" placeholder="Search: Luka, Celtics, Jokic..." />
+              <button class="btn" id="playerSearchBtn">Search</button>
+              <button class="btn ghost" id="playerBackfillBtn" title="Pull ESPN boxscores into game logs">Backfill Logs</button>
+            </div>
+            <div class="list" id="playerSearchList" style="margin-top:10px">—</div>
+          </div>
+
+          <div class="card">
+            <div class="card-h">Player Log</div>
+            <div class="muted" id="playerLogTitle">Pick a player</div>
+            <div class="list" id="playerRoll" style="margin-top:10px">—</div>
+            <div class="list" id="playerLog" style="margin-top:10px">—</div>
+          </div>
+        </div>
+</section>
+
+      <!-- Props -->
+      <section class="panel" id="tab-props">
+        <div class="panel-head">
+          <div>
+            <div class="panel-title">Props</div>
+            <div class="muted">Bulk add props + grade when final.</div>
+          </div>
+          <div class="row">
+            <button class="btn ghost" id="refreshProps">Refresh</button>
+            <button class="btn" id="gradeProps">Grade Now</button>
+          </div>
+        </div>
+
+        <div class="grid2">
+          <div class="card">
+            <div class="card-h">Bulk Add</div>
+            <div class="muted">Paste JSON array.</div>
+            <textarea id="bulkProps" spellcheck="false"></textarea>
+            <div class="row">
+              <button class="btn" id="addPropsBtn">Add Props</button>
+              <button class="btn ghost" id="samplePropsBtn">Sample</button>
+            </div>
+            <div class="muted" id="bulkMsg"></div>
+          </div>
+
+          <div class="card">
+            <div class="card-h">Saved Props</div>
+            <div class="list" id="propsList">Loading…</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Sync -->
+      <section class="panel" id="tab-sync">
+        <div class="panel-head">
+          <div>
+            <div class="panel-title">Sync</div>
+            <div class="muted">Keeps eventIds current.</div>
+          </div>
+        </div>
+
+        <div class="grid2">
+          <div class="card">
+            <div class="card-h">Daily Sync</div>
+            <div class="row">
+              <button class="btn" id="runDailyBtn">Run Daily Now</button>
+            </div>
+            <pre class="pre" id="syncOut">—</pre>
+          </div>
+
+          <div class="card">
+            <div class="card-h">Range Sync</div>
+            <div class="muted">YYYYMMDD (ex: 20260215)</div>
+            <div class="row">
+              <input id="rangeStart" placeholder="start YYYYMMDD"/>
+              <input id="rangeEnd" placeholder="end YYYYMMDD"/>
+            </div>
+            <div class="row">
+              <button class="btn" id="nbaRangeBtn">Sync NBA Range</button>
+              <button class="btn ghost" id="ncaabRangeBtn">Sync NCAAB Range</button>
+            </div>
+            <pre class="pre" id="rangeOut">—</pre>
+          </div>
+        </div>
+      </section>
+
+    </section>
+  </main>
+
+  <script src="/app.js"></script>
+<script>
+/* ====== STATS TAB (NBA saved boxscore stats) ======
+   Paste AFTER /app.js so we can reuse your existing helpers if they exist.
+*/
+(function () {
+  // tiny safe helpers (won't break if app.js already defines these)
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) =>
+    String(s ?? "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+
+  async function jget(url) {
+    const r = await fetch(url, { cache: "no-store" });
+    const ct = r.headers.get("content-type") || "";
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    if (ct.includes("application/json")) return r.json();
+    throw new Error("Expected JSON");
+  }
+
+  // prefer your app.js setTab if present
+  function setTabSafe(tab) {
+    if (typeof window.setTab === "function") return window.setTab(tab);
+    // fallback: toggle panels
+    document.querySelectorAll(".panel").forEach((p) => p.classList.remove("show"));
+    const el = document.getElementById("tab-" + tab);
+    if (el) el.classList.add("show");
+    document.querySelectorAll(".navbtn").forEach((b) => b.classList.remove("active"));
+    const nb = document.querySelector(`.navbtn[data-tab="${tab}"]`);
+    if (nb) nb.classList.add("active");
+  }
+
+  // 1) Add "Stats" nav button if missing
+  const nav = document.querySelector(".nav");
+  if (nav && !nav.querySelector('.navbtn[data-tab="stats"]')) {
+    const btn = document.createElement("button");
+    btn.className = "navbtn";
+    btn.setAttribute("data-tab", "stats");
+    btn.textContent = "Stats";
+    btn.addEventListener("click", () => setTabSafe("stats"));
+    nav.appendChild(btn);
+  }
+
+  // 2) Add Stats panel if missing
+  const content = document.querySelector(".content");
+  if (content && !document.getElementById("tab-stats")) {
+    const panel = document.createElement("section");
+    panel.className = "panel";
+    panel.id = "tab-stats";
+    panel.innerHTML = `
+      <div class="panel-head">
+        <div>
+          <div class="panel-title">NBA Player Stats</div>
+          <div class="muted">Saved boxscore lines from ESPN (PTS/REB/AST/3PT/MIN).</div>
+        </div>
+        <div class="row">
+          <input id="statsPlayerQ" placeholder="player (ex: Luka)" />
+          <input id="statsEventQ"  placeholder="eventId (optional)" />
+          <input id="statsDateQ"   placeholder="date YYYY-MM-DD (optional)" />
+          <select id="statsLimit">
+            <option value="50">50</option>
+            <option value="100" selected>100</option>
+            <option value="200">200</option>
+            <option value="500">500</option>
+          </select>
+          <button class="btn ghost" id="refreshStatsBtn">Refresh</button>
+        </div>
+      </div>
+
+      <div class="tablewrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Event</th>
+              <th>Player</th>
+              <th>Team</th>
+              <th>MIN</th>
+              <th>PTS</th>
+              <th>REB</th>
+              <th>AST</th>
+              <th>3PT</th>
+            </tr>
+          </thead>
+          <tbody id="statsBody"></tbody>
+        </table>
+      </div>
+      <div class="muted" style="margin-top:10px" id="statsMeta">—</div>
+    `;
+    content.appendChild(panel);
+  }
+
+  // 3) Render function
+  async function renderStats() {
+    const body = $("statsBody");
+    const meta = $("statsMeta");
+    if (!body) return;
+
+    body.innerHTML = `<tr><td colspan="9" class="muted">Loading…</td></tr>`;
+    if (meta) meta.textContent = "Loading…";
+
+    const player = ($("statsPlayerQ")?.value || "").trim();
+    const eventId = ($("statsEventQ")?.value || "").trim();
+    const dateISO = ($("statsDateQ")?.value || "").trim();
+    const limit = Number($("statsLimit")?.value || 100);
+
+    const qs = new URLSearchParams();
+    qs.set("limit", String(limit));
+    if (player) qs.set("player", player);
+    if (eventId) qs.set("eventId", eventId);
+    if (dateISO) qs.set("dateISO", dateISO);
+
+    let data;
+    try {
+      data = await jget("/api/nba/stats/players?" + qs.toString());
+    } catch (e) {
+      body.innerHTML = `<tr><td colspan="9" class="muted">Failed to load stats: ${esc(e.message)}</td></tr>`;
+      if (meta) meta.textContent = "—";
+      return;
+    }
+
+    const rows = Array.isArray(data.rows) ? data.rows : [];
+    if (!rows.length) {
+      body.innerHTML = `<tr><td colspan="9" class="muted">No results.</td></tr>`;
+      if (meta) meta.textContent = `0 rows`;
+      return;
+    }
+
+    body.innerHTML = rows
+      .map((r) => {
+        return `<tr>
+          <td>${esc(r.dateISO || "")}</td>
+          <td>${esc(r.eventId || "")}</td>
+          <td><b>${esc(r.player || "")}</b></td>
+          <td>${esc(r.team || "")}</td>
+          <td>${esc(r.MIN ?? "")}</td>
+          <td>${esc(r.PTS ?? "")}</td>
+          <td>${esc(r.REB ?? "")}</td>
+          <td>${esc(r.AST ?? "")}</td>
+          <td>${esc(r.THREES ?? "")}</td>
+        </tr>`;
+      })
+      .join("");
+
+    if (meta) meta.textContent = `${rows.length} rows (db count: ${data.count ?? "?"})`;
+  }
+
+  // 4) Wire button + allow Enter to refresh
+  function bind() {
+    const b = $("refreshStatsBtn");
+    if (b) b.onclick = renderStats;
+
+    ["statsPlayerQ", "statsEventQ", "statsDateQ"].forEach((id) => {
+      const el = $(id);
+      if (!el) return;
+      el.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") renderStats();
+      });
+    });
+
+    // If user clicks the Stats nav button, refresh once
+    const nb = document.querySelector('.navbtn[data-tab="stats"]');
+    if (nb && !nb.__ptBound) {
+      nb.__ptBound = true;
+      nb.addEventListener("click", () => setTimeout(renderStats, 50));
+    }
+  }
+
+  bind();
+})();
+</script>
+</body>
+</html>
