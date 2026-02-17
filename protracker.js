@@ -10454,3 +10454,34 @@ setTimeout(() => {
   }
 })();
 
+/* =========================
+   PT FINAL SERVER START (Render + Local Safe)
+   Paste at VERY BOTTOM of protracker.js
+   ========================= */
+
+(() => {
+  try {
+    if (!app || typeof app.listen !== "function") {
+      console.log("[pt] listen skipped (app missing)");
+      return;
+    }
+
+    // Prevent double listen if patches re-run
+    if (globalThis.__PT_SERVER_STARTED__) {
+      console.log("[pt] server already started, skipping");
+      return;
+    }
+    globalThis.__PT_SERVER_STARTED__ = true;
+
+    const PORT = process.env.PORT || 3000;
+    const HOST = "0.0.0.0";
+
+    app.listen(PORT, HOST, () => {
+      console.log(`[pt] ProTracker running on port ${PORT}`);
+    });
+
+  } catch (e) {
+    console.log("[pt] server start FAILED ❌", e?.stack || e?.message || e);
+  }
+})();
+
